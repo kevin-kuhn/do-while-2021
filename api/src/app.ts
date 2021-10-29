@@ -1,15 +1,29 @@
 import "dotenv/config"
+import Http from "http"
+import cors from "cors"
 import express from "express"
 import { router } from "./routes"
 
-import Http from 'http'
 import { Server } from "socket.io"
 
 const app = express()
+app.use(cors())
 
 const serverHttp = Http.createServer(app)
 
-const io = new Server(serverHttp)
+const io = new Server(serverHttp, {
+	cors: {
+		origin: "*",
+	},
+})
+
+io.on("connection", socket => {
+	console.log("Nova conexão no socket " + socket.id)
+
+	socket.on("disconnect", () => {
+		console.log("Conexão finalizada com o socket " + socket.id)
+	})
+})
 
 app.use(express.json())
 app.use(router)
@@ -26,6 +40,4 @@ app.get("/signin/callback", (req, res) => {
 	return res.json(code)
 })
 
-app.listen(4000, () => {
-	console.log("listening on port 3000")
-})
+export { serverHttp, io }
